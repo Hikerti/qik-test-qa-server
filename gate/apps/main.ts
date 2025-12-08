@@ -4,12 +4,13 @@ import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import fastifyCors from '@fastify/cors';
 import fastifyHelmet from '@fastify/helmet';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyCookie from '@fastify/cookie';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 import { ConfigSchema } from '@infractract/config';
@@ -57,6 +58,12 @@ async function bootstrap() {
       fileSize: 10 * 1024 * 1024,
     },
   });
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.NATS,
+    options: {
+      servers: ['nats://nats:4222'],
+    },
+  });
 
   app.setGlobalPrefix('api');
   app.enableVersioning({
@@ -96,6 +103,7 @@ async function bootstrap() {
    `);
   });
 
+  await app.startAllMicroservices();
   await app.listen(config.get<number>('GATE_HTTP_PORT'), '0.0.0.0');
 }
 
