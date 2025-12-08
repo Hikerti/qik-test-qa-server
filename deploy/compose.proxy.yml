@@ -18,6 +18,6 @@ services:
       - "80:80"
     depends_on:
       - gate
-      - ai_block_1
+      - generate
     networks:
       - qik_ai_cluster
