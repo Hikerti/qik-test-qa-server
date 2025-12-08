@@ -1,10 +1,7 @@
 import { Module } from '@nestjs/common';
-import { AppController } from '../src/app.controller';
-import { AppService } from '../src/app.service';
+import { ConfigProvider } from '@infractract';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [ConfigProvider.forRoot(['database', 's3'], 'gate')],
 })
 export class AppModule {}
