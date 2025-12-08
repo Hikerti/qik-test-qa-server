@@ -1,0 +1,43 @@
+version: "3.9"
+
+networks:
+  qik_ai_cluster:
+    external: true
+
+x-service: &service
+  restart: unless-stopped
+  environment:
+    ENVIRONMENT: ${ENVIRONMENT:-local}
+    SERVICE_NAME: ${SERVICE_NAME}
+  networks:
+    - qik_ai_cluster
+
+services:
+
+  gate:
+    <<: *service
+    build:
+      context: ./deploy/docker/gate
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: gate
+    ports:
+      - "3000:3000"
+    container_name: gate
+    depends_on:
+      - nats
+
+  ai_block_1:
+    <<: *service
+    build:
+      context: ./deploy/docker/ai
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: block_1
+    ports:
+      - "8001:8000"
+    container_name: ai_block_1
+    depends_on:
+      - nats
+    environment:
+      NATS_URL: nats://nats:4222
