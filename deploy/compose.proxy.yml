@@ -9,15 +9,15 @@ services:
       - "8222:8222"
     command: ["-DV"]
 
-  nginx:
-    build:
-      context: ./deploy/nginx
-      dockerfile: Dockerfile
-    container_name: nginx
-    ports:
-      - "80:80"
-    depends_on:
-      - gate
-      - generate
-    networks:
-      - qik_ai_cluster
+  # nginx:
+  #   build:
+  #     context: ./deploy/nginx
+  #     dockerfile: Dockerfile
+  #   container_name: nginx
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - gate
+  #     - generate
+  #   networks:
+  #     - qik_ai_cluster
