@@ -5,7 +5,7 @@ import { Nullable } from '@shared';
 
 import { AuthPayload, TokenType } from './types';
 import { TokenResolverService } from './resolvers';
-import { HttpError } from '@infrastructure/http';
+import { HttpError } from '@infractract/http';
 
 @Injectable()
 export class JwtService {

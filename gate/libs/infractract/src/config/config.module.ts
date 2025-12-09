@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { validateClass } from '@shared';
 
 import { Data } from './data';
-import { ConfigSchemaFactory, EnvPathFactory } from '@infrastructure/config/factories';
+import { ConfigSchemaFactory, EnvPathFactory } from '@infractract/config/factories';
 
 export class ConfigProvider {
   static forRoot(scopes: Data.Scope[], service?: Data.Service): Promise<DynamicModule> {

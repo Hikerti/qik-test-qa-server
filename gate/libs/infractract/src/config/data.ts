@@ -6,6 +6,7 @@ export namespace Data {
     export enum Enum {
       Database = 'database',
       S3 = 's3',
+      JWT = 'jwt',
     }
   }
 

@@ -7,7 +7,7 @@ networks:
 services:
   postgres:
     extends:
-      file: postgres/docker.yml
+      file: database/docker-postgres.yml
       service: postgres
     volumes:
       - ../.deploy/data/postgres:/var/lib/postgresql/data
@@ -22,7 +22,7 @@ services:
   adminer:
     container_name: adminer
     extends:
-      file: postgres/docker.yml
+      file: database/docker-postgres.yml
       service: adminer
     depends_on:
       - postgres
@@ -33,7 +33,7 @@ services:
   minio:
     container_name: ${S3_HOST}
     extends:
-      file: minio/docker.yml
+      file: database/docker-minio.yml
       service: minio
     hostname: ${S3_HOST}
     ports:

@@ -7,7 +7,7 @@ import { TokenType } from './types';
 import { REQUEST_TOKEN_PAYLOAD_FIELD } from '@systems';
 import { TokenResolverService } from './resolvers';
 import { TokenExtractorService } from './extractors';
-import { HttpError } from '@infrastructure/http';
+import { HttpError } from '@infractract/http';
 
 export class JwtGuard implements CanActivate {
   constructor(
