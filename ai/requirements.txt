@@ -1,6 +1,8 @@
 fastapi            # веб-фреймворк для нашего backend API
 uvicorn            # сервер для запуска FastAPI
 pydantic           # валидация входных/выходных данных
+pydantic-settings  # настройки Pydantic из переменных окружения
+pytest              # тестирование
 
 openai             # для выгрузки с работы с api LLM
 
