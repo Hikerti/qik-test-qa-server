@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { Messages, User, Chats, UserAuthMethod } from '@domains';
 import { ApiModule } from './api/api.module';
 import { JwtModule } from '@systems';
+import { TypeormModule } from '../libs/intergations/src';
 
 const ConfigModuleForRoot = ConfigProvider.forRoot(['database', 's3', 'jwt'], 'gate');
 
@@ -25,6 +26,7 @@ const ConfigModuleForRoot = ConfigProvider.forRoot(['database', 's3', 'jwt'], 'g
         synchronize: true,
       }),
     }),
+    TypeormModule,
     ApiModule,
     LoggerModule,
     JwtModule,

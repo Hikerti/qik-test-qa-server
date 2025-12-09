@@ -69,6 +69,6 @@ export namespace Schema {
       SALT_ROUNDS: number;
     }
 
-    export const Self = [Database, S3];
+    export const Self = [Database, S3, JWT];
   }
 }
