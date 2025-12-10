@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsInt, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
-
-import { ApiSchemaName } from '@contracts';
+import { ApiSchemaName } from '@shared';
 
 export namespace PaginationDTO {
   @ApiSchemaName('PaginationRequestDTO')

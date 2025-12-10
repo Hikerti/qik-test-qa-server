@@ -8,13 +8,17 @@ import { TokenType } from '../types';
 import { TokenResolver } from './token-resolver.interface';
 import { AccessTokenResolver } from './access-token.resolver';
 import { RefreshTokenResolver } from './refresh-token.resolver';
-import { ConfigSchema } from '@infrastructure/config';
+import { ConfigSchema } from '@infractract/config';
 
 @Injectable()
 export class TokenResolverService {
-  private readonly _jwtType2TokenConvertor: { [key in TokenType]: TokenResolver<any> };
+  private readonly _jwtType2TokenConvertor: {
+    [key in TokenType]: TokenResolver<any>;
+  };
 
-  constructor(private readonly configService: ConfigService<ConfigSchema.Scope.JWT>) {
+  constructor(
+    private readonly configService: ConfigService<ConfigSchema.Scope.JWT>,
+  ) {
     this._jwtType2TokenConvertor = {
       [TokenType.Access]: new AccessTokenResolver(this.configService),
       [TokenType.Refresh]: new RefreshTokenResolver(this.configService),

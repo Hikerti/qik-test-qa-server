@@ -1,6 +1,6 @@
 import { Type } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
-import { HttpResponse } from '@infrastructure/http';
+import { HttpResponse } from '@infractract/http';
 
 export const HttpResponseBody = <T extends object>(responsePayload: Type<T>): Type<HttpResponse<T>> => {
   const payloadName = responsePayload.name;

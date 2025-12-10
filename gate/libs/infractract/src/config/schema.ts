@@ -54,7 +54,21 @@ export namespace Schema {
       @IsString()
       S3_REGION: string;
     }
-    export const Self = [Database, S3];
 
+    export class JWT {
+      static scope: Data.Scope = Data.Scope.Enum.JWT;
+
+      @Type(() => Number)
+      @IsInt()
+      JWT_REFRESH_TOKEN_SECRET: number;
+      @Type(() => Number)
+      @IsInt()
+      JWT_ACCESS_TOKEN_SECRET: number;
+      @Type(() => Number)
+      @IsInt()
+      SALT_ROUNDS: number;
+    }
+
+    export const Self = [Database, S3, JWT];
   }
 }
