@@ -23,4 +23,6 @@ pip install -r requirements.txt
 
 См. `structure.md` для детальной структуры проекта.
 
-
+! чекнуть натс 
+! nats://nats:4222
+! но для локали nats://localhost:4222

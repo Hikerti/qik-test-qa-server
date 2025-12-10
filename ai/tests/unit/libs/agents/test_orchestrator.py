@@ -4,10 +4,13 @@ import pytest
 from pathlib import Path
 from libs.systems.llm.local_llm_stub import LocalLLMStub
 from libs.agents.orchestrator.orchestrator import Orchestrator
+from libs.shared.config import settings
 
 
-def test_orchestrator_start_run():
+def test_orchestrator_start_run(tmp_path, monkeypatch):
     """Test orchestrator start_run method."""
+    # isolate artifacts to temp dir
+    settings.ARTIFACTS_DIR = str(tmp_path / "ai_artifacts")
     llm = LocalLLMStub()
     orchestrator = Orchestrator(llm)
 

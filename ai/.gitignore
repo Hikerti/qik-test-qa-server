@@ -1,5 +1,6 @@
 # Local ignore rules for AI subproject
 fasttest.py
+plans.md
 
 __pycache__/
 *.py[cod]

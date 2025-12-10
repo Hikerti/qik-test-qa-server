@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     QDRANT_URL: str = "http://localhost:6333"
     LLM_MODE: str = "local"
     ARTIFACTS_DIR: str = "ai_artifacts"
+    LLM_API_KEY: str
     
     class Config:
         env_file = ".env"

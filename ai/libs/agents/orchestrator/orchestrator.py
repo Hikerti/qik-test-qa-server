@@ -4,10 +4,10 @@ import os
 import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional, TYPE_CHECKING
-import uuid
 
 from libs.shared.config import settings
 from libs.agents.spec_loader.parser import parse_openapi
+from libs.agents.planner.planner_stub import PlannerStub
 
 if TYPE_CHECKING:
     from libs.integrations.interfaces.llm import LLMService
@@ -72,10 +72,11 @@ class Orchestrator:
         try:
             # Parse OpenAPI spec
             endpoints = parse_openapi(spec)
-            
-            # Build simple prompt
-            summary = f"{len(endpoints)} endpoint(s)"
-            prompt = f"Generate pytest for: {summary}"
+
+            # Plan generation steps
+            planner = PlannerStub()
+            plan = planner.plan(endpoints)
+            prompt = self._build_prompt_from_plan(plan)
             
             # Call LLM
             code = self.llm.generate(prompt)
@@ -85,7 +86,7 @@ class Orchestrator:
             run_dir.mkdir(parents=True, exist_ok=True)
             
             # Save generated code
-            artifact_file = run_dir / "test_generated.py"
+            artifact_file = run_dir / f"generated_{run_id}.py"
             artifact_file.write_text(code, encoding="utf-8")
             
             # Store artifact path (absolute for robustness)
@@ -121,3 +122,9 @@ class Orchestrator:
             Run dictionary or None if not found
         """
         return _RUN_STORE.get(run_id)
+
+    def _build_prompt_from_plan(self, plan):
+        """
+        Build prompt string from plan steps.
+        """
+        return "\n".join(plan)
