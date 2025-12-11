@@ -1,14 +1,16 @@
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { PaginationDTO } from '@shared';
 import { User } from './user.entities';
 import { UserDTO } from './user.dto';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class UserRepository {
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-  ) {}
+  private userRepository: Repository<User>;
+
+  constructor(private dataSource: DataSource) {
+    this.userRepository = this.dataSource.getRepository(User);
+  }
 
   async getAll(
     query: PaginationDTO.Request,

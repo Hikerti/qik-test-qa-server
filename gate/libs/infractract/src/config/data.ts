@@ -7,6 +7,7 @@ export namespace Data {
       Database = 'database',
       S3 = 's3',
       JWT = 'jwt',
+      NATS = 'nats',
     }
   }
 

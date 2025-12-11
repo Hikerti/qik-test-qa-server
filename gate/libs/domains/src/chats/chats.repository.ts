@@ -1,14 +1,15 @@
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Chats } from './chats.entities';
-import { ChatsDTO } from './chats.dto';
+import { DataSource, Repository } from 'typeorm';
+import { ChatsDTO, Chats } from '@domains';
 import { PaginationDTO } from '@shared';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class ChatsRepository {
-  constructor(
-    @InjectRepository(Chats)
-    private readonly chatsRepository: Repository<Chats>,
-  ) {}
+  private chatsRepository: Repository<Chats>;
+
+  constructor(private dataSource: DataSource) {
+    this.chatsRepository = this.dataSource.getRepository(Chats);
+  }
 
   async getAllByUser(
     userId: string,

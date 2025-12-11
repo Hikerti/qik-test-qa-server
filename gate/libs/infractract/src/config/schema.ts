@@ -69,6 +69,15 @@ export namespace Schema {
       SALT_ROUNDS: number;
     }
 
-    export const Self = [Database, S3, JWT];
+    export class NATS {
+      static scope: Data.Scope = Data.Scope.Enum.NATS;
+
+      @IsString()
+      NATS_PATH_LOCAL: string;
+      @IsString()
+      NATS_PATH_PROD: string;
+    }
+
+    export const Self = [Database, S3, JWT, NATS];
   }
 }

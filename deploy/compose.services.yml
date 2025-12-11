@@ -1,5 +1,3 @@
-version: "3.9"
-
 networks:
   qik_ai_cluster:
     external: true
@@ -8,36 +6,78 @@ x-service: &service
   restart: unless-stopped
   environment:
     ENVIRONMENT: ${ENVIRONMENT:-local}
-    SERVICE_NAME: ${SERVICE_NAME}
+    NATS_URL: nats://nats:4222
   networks:
     - qik_ai_cluster
 
+x-nest-build: &nest-build
+  context: ..
+  dockerfile: gate/Dockerfile
+
 services:
-
-  gate:
+  api:
     <<: *service
     build:
-      context: ./deploy/docker/gate
-      dockerfile: Dockerfile
+      <<: *nest-build
       args:
-        SERVICE_NAME: gate
+        SERVICE_NAME: api
     ports:
-      - "3000:3000"
-    container_name: gate
+      - "3004:3004"
+    container_name: api
     depends_on:
       - nats
+      - postgres
+      - minio
 
-  generate:
+  user:
     <<: *service
     build:
-      context: ./deploy/docker/ai
-      dockerfile: Dockerfile
+      <<: *nest-build
       args:
-        SERVICE_NAME: generate
-    ports:
-      - "8001:8000"
-    container_name: generate
+        SERVICE_NAME: user
+    container_name: user
     depends_on:
       - nats
-    environment:
-      NATS_URL: nats://nats:4222
+      - postgres
+      - api
+
+  messages:
+    <<: *service
+    build:
+      <<: *nest-build
+      args:
+        SERVICE_NAME: messages
+    container_name: messages
+    depends_on:
+      - nats
+      - postgres
+      - api
+
+  chats:
+    <<: *service
+    build:
+      <<: *nest-build
+      args:
+        SERVICE_NAME: chats
+    container_name: chats
+    depends_on:
+      - nats
+      - postgres
+      - api
+
+#  generate:
+#    <<: *service
+#    build:
+#      context: ./ai
+#    ports:
+#      - "8001:8000"
+#    container_name: generate
+#    depends_on:
+#      - nats
+#      - user
+#      - messages
+#      - chats
+#      - auth
+#      - postgres
+#      - minio
+#      - gate

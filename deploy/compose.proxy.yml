@@ -8,6 +8,9 @@ services:
       - "4222:4222"
       - "8222:8222"
     command: ["-DV"]
+    networks:
+      - qik_ai_cluster
+
 
   # nginx:
   #   build:

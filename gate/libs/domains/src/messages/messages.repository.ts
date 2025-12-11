@@ -1,14 +1,16 @@
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { PaginationDTO } from '@shared';
 import { Messages, SenderType } from './messages.entities';
 import { MessagesDTO } from './messages.dto';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class MessagesRepository {
-  constructor(
-    @InjectRepository(Messages)
-    private readonly messagesRepository: Repository<Messages>,
-  ) {}
+  private messagesRepository: Repository<Messages>;
+
+  constructor(private dataSource: DataSource) {
+    this.messagesRepository = this.dataSource.getRepository(Messages);
+  }
 
   async getAllByChats(
     chatId: string,
