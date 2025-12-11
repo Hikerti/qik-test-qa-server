@@ -17,18 +17,18 @@ x-nest-build: &nest-build
   dockerfile: gate/Dockerfile
 
 services:
-#  api:
-#    <<: *service
-#    build:
-#      <<: *nest-build
-#      args:
-#        SERVICE_NAME: api
-#    ports:
-#      - "3004:3004"
-#    container_name: api
-#    depends_on:
-#      - nats
-#      - postgres
+  api:
+    <<: *service
+    build:
+      <<: *nest-build
+      args:
+        SERVICE_NAME: api
+    ports:
+      - "3004:3004"
+    container_name: api
+    depends_on:
+      - nats
+      - postgres
 
 #  client:
 #    build:
