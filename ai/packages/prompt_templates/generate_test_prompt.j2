@@ -1,4 +1,25 @@
-{# Jinja2 template for generating test prompts #}
-{# TODO: Implement test generation prompt template #}
+{# Jinja2 template for generating pytest tests #}
 
+You are an expert QA engineer. Generate pytest tests with AAA pattern and Allure labels.
 
+Summary: {{ summary }}
+Max tests per endpoint: {{ max_tests_per_endpoint }}
+
+Endpoints:
+{% for ep in endpoints %}
+- {{ ep.method | upper }} {{ ep.path }}
+{% endfor %}
+
+Plan:
+{% for step in plan %}
+- {{ step }}
+{% endfor %}
+
+Constraints:
+- Use pytest style (functions), include assert.
+- Use def test_* naming.
+- Keep code minimal and runnable.
+- Add basic positive case per endpoint (negative if relevant).
+- Do NOT wrap the code in markdown fences. Output raw Python code only.
+
+Output only valid Python code.***

@@ -4,9 +4,8 @@ from fastapi import APIRouter, BackgroundTasks, status
 from pydantic import BaseModel
 from typing import Dict, Any
 
-from libs.systems.llm.local_llm_stub import LocalLLMStub
-from libs.agents.orchestrator.orchestrator import Orchestrator
 import uuid
+from ai_api.services.orchestrator_adapter import create_orchestrator
 
 router = APIRouter()
 
@@ -31,9 +30,7 @@ def generate(
     Returns:
         JSON with status "started"
     """
-    # Create LLM stub and orchestrator
-    llm = LocalLLMStub()
-    orchestrator = Orchestrator(llm)
+    orchestrator = create_orchestrator()
 
     # Pre-generate run_id to return immediately
     run_id = str(uuid.uuid4())

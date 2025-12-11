@@ -4,7 +4,7 @@ from typing import Protocol
 
 
 class LLMService(Protocol):
-    """Protocol for LLM service - synchronous API for M1."""
+    """Protocol for LLM service - sync and async API for M3."""
     
     def generate(self, prompt: str, max_tokens: int = 512) -> str:
         """
@@ -16,5 +16,11 @@ class LLMService(Protocol):
             
         Returns:
             Generated text as string
+        """
+        ...
+
+    async def agenerate(self, prompt: str, max_tokens: int = 512) -> str:
+        """
+        Async generation of text.
         """
         ...

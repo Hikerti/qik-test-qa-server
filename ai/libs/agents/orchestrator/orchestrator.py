@@ -8,6 +8,8 @@ from typing import Dict, Any, Optional, TYPE_CHECKING
 from libs.shared.config import settings
 from libs.agents.spec_loader.parser import parse_openapi
 from libs.agents.planner.planner_stub import PlannerStub
+from libs.agents.generator.prompt_builder import PromptBuilder
+from libs.agents.validator.semantic_checks import validate_generated_code
 
 if TYPE_CHECKING:
     from libs.integrations.interfaces.llm import LLMService
@@ -76,10 +78,14 @@ class Orchestrator:
             # Plan generation steps
             planner = PlannerStub()
             plan = planner.plan(endpoints)
-            prompt = self._build_prompt_from_plan(plan)
+
+            # Build prompt using template
+            prompt_builder = PromptBuilder()
+            prompt = prompt_builder.build(plan=plan, endpoints=endpoints, spec=spec)
             
             # Call LLM
-            code = self.llm.generate(prompt)
+            code_raw = self.llm.generate(prompt)
+            code = self._extract_code_block(code_raw).strip() or code_raw.strip()
             
             # Create run directory
             run_dir = self.artifacts_dir / run_id
@@ -88,6 +94,16 @@ class Orchestrator:
             # Save generated code
             artifact_file = run_dir / f"generated_{run_id}.py"
             artifact_file.write_text(code, encoding="utf-8")
+
+            # Validate generated code
+            is_valid, validation_error = validate_generated_code(str(artifact_file))
+            if not is_valid:
+                _RUN_STORE[run_id] = {
+                    "status": "failed",
+                    "error": validation_error,
+                    "run_id": run_id
+                }
+                return run_id
             
             # Store artifact path (absolute for robustness)
             rel_path = str(artifact_file)
@@ -128,3 +144,25 @@ class Orchestrator:
         Build prompt string from plan steps.
         """
         return "\n".join(plan)
+
+    @staticmethod
+    def _extract_code_block(text: str) -> str:
+        """
+        Extract first code block from markdown fences if present.
+        Strips ``` and optional language header (e.g., ```python).
+        """
+        if "```" not in text:
+            return text
+
+        parts = text.split("```")
+        # code blocks are in odd indices
+        for i in range(1, len(parts), 2):
+            block = parts[i]
+            lines = block.splitlines()
+            if lines and lines[0].strip().lower().startswith(("python", "py")):
+                lines = lines[1:]
+            cleaned = "\n".join(lines).strip()
+            if cleaned:
+                return cleaned
+
+        return text
