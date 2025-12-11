@@ -1,3 +1,5 @@
+name: "apps"
+
 networks:
   qik_ai_cluster:
     external: true
@@ -27,7 +29,16 @@ services:
     depends_on:
       - nats
       - postgres
-      - minio
+
+  client:
+    build:
+      context: ...
+      dockerfile: client/Dockerfile
+    environment:
+      - NODE_ENV=production
+    ports:
+      - 4002:3000
+    restart: unless-stopped
 
   user:
     <<: *service

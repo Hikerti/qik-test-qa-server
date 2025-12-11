@@ -11,6 +11,8 @@ export namespace RegisterContract {
   export const name = 'Register';
   export const description = 'Registers user';
 
+  export const jwt: JWTGuardOptions = { [TokenType.Refresh]: 'required' };
+
   @ApiSchemaName(`${AuthContract.name}${name}RequestBody`)
   export class RequestBody extends UserDTO.Register {}
 

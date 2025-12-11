@@ -58,12 +58,10 @@ export namespace Schema {
     export class JWT {
       static scope: Data.Scope = Data.Scope.Enum.JWT;
 
-      @Type(() => Number)
-      @IsInt()
-      JWT_REFRESH_TOKEN_SECRET: number;
-      @Type(() => Number)
-      @IsInt()
-      JWT_ACCESS_TOKEN_SECRET: number;
+      @IsString()
+      JWT_REFRESH_TOKEN_SECRET: string;
+      @IsString()
+      JWT_ACCESS_TOKEN_SECRET: string;
       @Type(() => Number)
       @IsInt()
       SALT_ROUNDS: number;

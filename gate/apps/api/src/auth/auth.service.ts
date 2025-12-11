@@ -32,6 +32,7 @@ export class AuthService {
   ): Promise<RegisterContract.ResponsePayload> {
     const hashedPassword = await this.password.hashPassword(body.password);
     const user = await this.authRepository.register(body);
+    console.log(user);
 
     if (!user) {
       throw new HttpError({ status: 404, code: 'user_not_found' });
