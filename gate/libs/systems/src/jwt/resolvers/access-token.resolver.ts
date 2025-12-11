@@ -9,8 +9,7 @@ export class AccessTokenResolver
   implements TokenResolver<AuthPayload>
 {
   get secret() {
-    console.log(this.config.get('JWT_ACCESS_TOKEN_SECRET'));
-    return 'anotherSuperSecretKey456';
+    return this.config.get('JWT_ACCESS_TOKEN_SECRET');
   }
 
   get maxAge() {

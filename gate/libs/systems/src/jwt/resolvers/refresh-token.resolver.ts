@@ -9,8 +9,7 @@ export class RefreshTokenResolver
   implements TokenResolver<AuthPayload>
 {
   get secret() {
-    console.log(this.config.get('JWT_REFRESH_TOKEN_SECRET'));
-    return "someSuperSecretKey123";
+    return this.config.get('JWT_REFRESH_TOKEN_SECRET');
   }
 
   get maxAge() {

@@ -31,7 +31,7 @@ export class UserService {
   async findAuthorized(
     auth: AuthPayload,
   ): Promise<GetAuthorizedUserContract.ResponsePayload> {
-    return this.userClient.send('users.findAuthorized', { auth }).toPromise();
+    return this.userClient.send('users.findAuthorize', { auth }).toPromise();
   }
 
   async updateById(

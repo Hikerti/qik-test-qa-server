@@ -17,28 +17,28 @@ x-nest-build: &nest-build
   dockerfile: gate/Dockerfile
 
 services:
-  api:
-    <<: *service
-    build:
-      <<: *nest-build
-      args:
-        SERVICE_NAME: api
-    ports:
-      - "3004:3004"
-    container_name: api
-    depends_on:
-      - nats
-      - postgres
+#  api:
+#    <<: *service
+#    build:
+#      <<: *nest-build
+#      args:
+#        SERVICE_NAME: api
+#    ports:
+#      - "3004:3004"
+#    container_name: api
+#    depends_on:
+#      - nats
+#      - postgres
 
-  client:
-    build:
-      context: ...
-      dockerfile: client/Dockerfile
-    environment:
-      - NODE_ENV=production
-    ports:
-      - 4002:3000
-    restart: unless-stopped
+#  client:
+#    build:
+#      context: ...
+#      dockerfile: client/Dockerfile
+#    environment:
+#      - NODE_ENV=production
+#    ports:
+#      - 4002:3000
+#    restart: unless-stopped
 
   user:
     <<: *service
