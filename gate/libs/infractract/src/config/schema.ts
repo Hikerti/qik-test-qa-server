@@ -37,38 +37,27 @@ export namespace Schema {
       DATABASE_NAME: string;
     }
 
-    export class S3 {
-      static scope: Data.Scope = Data.Scope.Enum.S3;
-
-      @IsString()
-      S3_USER: string;
-      @IsString()
-      S3_PASSWORD: string;
-      @IsInt()
-      @Type(() => Number)
-      S3_PORT: string;
-      @IsString()
-      S3_HOST: string;
-      @IsString()
-      S3_BUCKET: string;
-      @IsString()
-      S3_REGION: string;
-    }
-
     export class JWT {
       static scope: Data.Scope = Data.Scope.Enum.JWT;
 
-      @Type(() => Number)
-      @IsInt()
-      JWT_REFRESH_TOKEN_SECRET: number;
-      @Type(() => Number)
-      @IsInt()
-      JWT_ACCESS_TOKEN_SECRET: number;
+      @IsString()
+      JWT_REFRESH_TOKEN_SECRET: string;
+      @IsString()
+      JWT_ACCESS_TOKEN_SECRET: string;
       @Type(() => Number)
       @IsInt()
       SALT_ROUNDS: number;
     }
 
-    export const Self = [Database, S3, JWT];
+    export class NATS {
+      static scope: Data.Scope = Data.Scope.Enum.NATS;
+
+      @IsString()
+      NATS_PATH_LOCAL: string;
+      @IsString()
+      NATS_PATH_PROD: string;
+    }
+
+    export const Self = [Database, JWT, NATS];
   }
 }

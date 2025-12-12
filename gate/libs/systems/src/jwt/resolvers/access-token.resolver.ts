@@ -4,7 +4,10 @@ import { BaseTokenResolver } from './base-token.resolver';
 import { TokenResolver } from './token-resolver.interface';
 import { AuthPayload } from '../types';
 
-export class AccessTokenResolver extends BaseTokenResolver implements TokenResolver<AuthPayload> {
+export class AccessTokenResolver
+  extends BaseTokenResolver
+  implements TokenResolver<AuthPayload>
+{
   get secret() {
     return this.config.get('JWT_ACCESS_TOKEN_SECRET');
   }

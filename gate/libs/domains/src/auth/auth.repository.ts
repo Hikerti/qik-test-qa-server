@@ -1,15 +1,17 @@
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { User, UserDTO } from '../user';
 import { UserAuthMethod, UserAuthType } from '../user-auth-method';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class AuthRepository {
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(UserAuthMethod)
-    private readonly authMethodRepository: Repository<UserAuthMethod>,
-  ) {}
+  private userRepository: Repository<User>;
+  private authMethodRepository: Repository<UserAuthMethod>;
+
+  constructor(private dataSource: DataSource) {
+    this.userRepository = this.dataSource.getRepository(User);
+    this.authMethodRepository = this.dataSource.getRepository(UserAuthMethod);
+  }
 
   async login(email: string): Promise<User | null> {
     const user = await this.userRepository.findOne({

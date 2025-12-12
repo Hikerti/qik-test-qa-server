@@ -7,7 +7,7 @@ config();
 import { Data } from '../data';
 
 export class EnvPathFactory {
-  private static readonly BASE_DIR = path.resolve(process.cwd(), '..');
+  private static readonly BASE_DIR = path.resolve(process.cwd(), '.');
 
   private static env() {
     return process.env.ENVIRONMENT || 'local';

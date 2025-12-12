@@ -5,8 +5,8 @@ export namespace Data {
   export namespace Scope {
     export enum Enum {
       Database = 'database',
-      S3 = 's3',
       JWT = 'jwt',
+      NATS = 'nats',
     }
   }
 

@@ -4,7 +4,10 @@ import { AuthPayload } from '../types';
 import { BaseTokenResolver } from './base-token.resolver';
 import { TokenResolver } from './token-resolver.interface';
 
-export class RefreshTokenResolver extends BaseTokenResolver implements TokenResolver<AuthPayload> {
+export class RefreshTokenResolver
+  extends BaseTokenResolver
+  implements TokenResolver<AuthPayload>
+{
   get secret() {
     return this.config.get('JWT_REFRESH_TOKEN_SECRET');
   }
