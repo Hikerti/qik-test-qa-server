@@ -6,7 +6,7 @@ import { ConfigProvider } from '@infractract';
 import { ChatsModule } from './chats/chats.module';
 
 const ConfigModuleForRoot = ConfigProvider.forRoot(
-  ['database', 's3', 'jwt', 'nats'],
+  ['database', 'jwt', 'nats'],
   'gate',
 );
 

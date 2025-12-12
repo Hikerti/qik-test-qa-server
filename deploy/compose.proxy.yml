@@ -12,15 +12,15 @@ services:
       - qik_ai_cluster
 
 
-#  nginx:
-#    build:
-#      context: ./nginx
-#      dockerfile: Dockerfile
-#    container_name: nginx
-#    ports:
-#      - "80:80"
-#    depends_on:
-#      - api
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - api
 #      - client
-#    networks:
-#      - qik_ai_cluster
+    networks:
+      - qik_ai_cluster

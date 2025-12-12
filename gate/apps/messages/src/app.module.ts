@@ -6,7 +6,7 @@ import { Chats, Messages, User, UserAuthMethod } from '@domains';
 import { ConfigProvider } from '@infractract';
 
 const ConfigModuleForRoot = ConfigProvider.forRoot(
-  ['database', 's3', 'jwt', 'nats'],
+  ['database', 'jwt', 'nats'],
   'gate',
 );
 

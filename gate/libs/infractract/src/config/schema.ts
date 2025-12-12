@@ -37,24 +37,6 @@ export namespace Schema {
       DATABASE_NAME: string;
     }
 
-    export class S3 {
-      static scope: Data.Scope = Data.Scope.Enum.S3;
-
-      @IsString()
-      S3_USER: string;
-      @IsString()
-      S3_PASSWORD: string;
-      @IsInt()
-      @Type(() => Number)
-      S3_PORT: string;
-      @IsString()
-      S3_HOST: string;
-      @IsString()
-      S3_BUCKET: string;
-      @IsString()
-      S3_REGION: string;
-    }
-
     export class JWT {
       static scope: Data.Scope = Data.Scope.Enum.JWT;
 
@@ -76,6 +58,6 @@ export namespace Schema {
       NATS_PATH_PROD: string;
     }
 
-    export const Self = [Database, S3, JWT, NATS];
+    export const Self = [Database, JWT, NATS];
   }
 }

@@ -6,7 +6,7 @@ import { ConfigProvider } from '@infractract';
 import { UserModule } from './user/user.module';
 
 const ConfigModuleForRoot = ConfigProvider.forRoot(
-  ['database', 's3', 'jwt', 'nats'],
+  ['database', 'jwt', 'nats'],
   'gate',
 );
 

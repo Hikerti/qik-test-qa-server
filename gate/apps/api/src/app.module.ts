@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { Chats, Messages, User, UserAuthMethod } from '@domains';
 
 const ConfigModuleForRoot = ConfigProvider.forRoot(
-  ['database', 's3', 'jwt', 'nats'],
+  ['database', 'jwt', 'nats'],
   'gate',
 );
 
