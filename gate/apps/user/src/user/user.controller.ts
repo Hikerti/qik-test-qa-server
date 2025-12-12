@@ -8,45 +8,33 @@ import { UserDTO } from '@domains';
 @Controller()
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
   @MessagePattern('users.getAll')
-  async getAll(
-    @Payload()
-    data: {
-      query: PaginationDTO.Request;
-    },
-  ) {
+  async getAll(@Payload() data: { query: PaginationDTO.Request }) {
     return this.userService.getList(data.query);
   }
 
   @MessagePattern('users.findById')
-  async findById(@Payload() params: { userId: string }) {
-    return this.userService.findById(params);
+  async findById(@Payload() data: { params: { userId: string } }) {
+    return this.userService.findById(data.params);
   }
 
   @MessagePattern('users.findAuthorize')
-  async findAuthorize(@Payload() authPayload: AuthPayload) {
-    return this.userService.findAuthorized(authPayload);
+  async findAuthorize(@Payload() data: { auth: AuthPayload }) {
+    return this.userService.findAuthorized(data.auth);
   }
 
-  @MessagePattern('users.update')
+  @MessagePattern('users.updateById')
   async update(
-    @Payload()
-    data: {
-      params: { userId: string };
-      body: UserDTO.Update;
-    },
+    @Payload() data: { params: { userId: string }; body: UserDTO.Update },
   ) {
     return this.userService.updateById(data.params, data.body);
   }
 
-  @MessagePattern('users.update')
+  @MessagePattern('users.updateAuthorized')
   async updateAuthorize(
-    @Payload()
-    data: {
-      authPayload: AuthPayload;
-      body: UserDTO.Update;
-    },
+    @Payload() data: { auth: AuthPayload; body: UserDTO.Update },
   ) {
-    return this.userService.updateAuthorized(data.authPayload, data.body);
+    return this.userService.updateAuthorized(data.auth, data.body);
   }
 }

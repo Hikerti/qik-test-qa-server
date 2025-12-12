@@ -20,8 +20,8 @@ export class ChatsController {
   }
 
   @MessagePattern('chats.findById')
-  async findById(@Payload() params: { id: string }) {
-    return this.chatsService.findById(params);
+  async findById(@Payload() data: { params: { id: string } }) {
+    return this.chatsService.findById(data.params);
   }
 
   @MessagePattern('chats.create')

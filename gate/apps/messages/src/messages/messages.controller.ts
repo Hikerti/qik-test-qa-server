@@ -30,8 +30,8 @@ export class MessagesController {
   }
 
   @MessagePattern('messages.findById')
-  async findById(@Payload() params: { id: string }) {
-    return this.messagesService.findById(params);
+  async findById(@Payload() data: { params: { id: string } }) {
+    return this.messagesService.findById(data.params);
   }
 
   @MessagePattern('messages.create')

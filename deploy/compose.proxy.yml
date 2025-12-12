@@ -19,8 +19,10 @@ services:
     container_name: nginx
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - api
-#      - client
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     networks:
       - qik_ai_cluster
