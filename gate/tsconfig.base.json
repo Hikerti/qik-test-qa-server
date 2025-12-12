@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@domains": ["libs/domains/src"],
+      "@infractract/*": ["libs/infractract/src/*"],
+      "@infractract": ["libs/infractract/src"],
+      "@shared": ["libs/shared/src"],
+      "@systems": ["libs/systems/src"]
+    }
+  }
+}

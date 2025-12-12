@@ -31,8 +31,8 @@ const config_1 = __webpack_require__(5);
 const typeorm_1 = __webpack_require__(6);
 const messages_module_1 = __webpack_require__(7);
 const _domains_1 = __webpack_require__(8);
-const _infractract_1 = __webpack_require__(94);
-const ConfigModuleForRoot = _infractract_1.ConfigProvider.forRoot(['database', 's3', 'jwt', 'nats'], 'gate');
+const _infractract_1 = __webpack_require__(96);
+const ConfigModuleForRoot = _infractract_1.ConfigProvider.forRoot(['database', 'jwt', 'nats'], 'gate');
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -50,11 +50,10 @@ exports.AppModule = AppModule = __decorate([
                     username: configService.get('DATABASE_USER'),
                     password: configService.get('DATABASE_PASSWORD'),
                     database: configService.get('DATABASE_NAME'),
-                    entities: [_domains_1.User, _domains_1.Messages, _domains_1.Chats],
+                    entities: [_domains_1.Messages, _domains_1.User, _domains_1.UserAuthMethod, _domains_1.Chats],
                     synchronize: true,
                 }),
             }),
-            typeorm_1.TypeOrmModule,
             messages_module_1.MessagesModule,
         ],
     })
@@ -94,15 +93,18 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MessagesModule = void 0;
 const common_1 = __webpack_require__(4);
 const _domains_1 = __webpack_require__(8);
-const messages_service_1 = __webpack_require__(92);
-const messages_controller_1 = __webpack_require__(93);
+const messages_service_1 = __webpack_require__(94);
+const messages_controller_1 = __webpack_require__(95);
+const typeorm_1 = __webpack_require__(6);
 let MessagesModule = class MessagesModule {
 };
 exports.MessagesModule = MessagesModule;
 exports.MessagesModule = MessagesModule = __decorate([
     (0, common_1.Module)({
+        imports: [typeorm_1.TypeOrmModule.forFeature([_domains_1.Messages])],
         providers: [messages_service_1.MessagesService, _domains_1.MessagesRepository],
         controllers: [messages_controller_1.MessagesController],
+        exports: [_domains_1.MessagesRepository],
     })
 ], MessagesModule);
 
@@ -132,6 +134,7 @@ __exportStar(__webpack_require__(12), exports);
 __exportStar(__webpack_require__(81), exports);
 __exportStar(__webpack_require__(86), exports);
 __exportStar(__webpack_require__(90), exports);
+__exportStar(__webpack_require__(92), exports);
 
 
 /***/ }),
@@ -2116,9 +2119,9 @@ var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MessagesDTO = void 0;
 const swagger_1 = __webpack_require__(14);
-const _domains_1 = __webpack_require__(8);
 const _shared_1 = __webpack_require__(15);
 const class_validator_1 = __webpack_require__(68);
+const messages_entities_1 = __webpack_require__(83);
 let MessagesDTO = class MessagesDTO {
     static fromModel(model) {
         return {
@@ -2140,9 +2143,9 @@ __decorate([
     __metadata("design:type", String)
 ], MessagesDTO.prototype, "content", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsEnum)(() => _domains_1.SenderType),
-    __metadata("design:type", typeof (_a = typeof _domains_1.SenderType !== "undefined" && _domains_1.SenderType) === "function" ? _a : Object)
+    (0, swagger_1.ApiProperty)({ enum: messages_entities_1.SenderType }),
+    (0, class_validator_1.IsEnum)(messages_entities_1.SenderType),
+    __metadata("design:type", typeof (_a = typeof messages_entities_1.SenderType !== "undefined" && messages_entities_1.SenderType) === "function" ? _a : Object)
 ], MessagesDTO.prototype, "sender", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
@@ -2153,7 +2156,11 @@ exports.MessagesDTO = MessagesDTO = __decorate([
     (0, _shared_1.ApiSchemaName)('MessagesDTO')
 ], MessagesDTO);
 (function (MessagesDTO) {
-    let Create = class Create extends (0, swagger_1.OmitType)(MessagesDTO, ['id', 'createdAt']) {
+    let Create = class Create extends (0, swagger_1.OmitType)(MessagesDTO, [
+        'id',
+        'sender',
+        'createdAt',
+    ]) {
     };
     Create = __decorate([
         (0, _shared_1.ApiSchemaName)('MessagesCreateDTO')
@@ -2242,18 +2249,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MessagesRepository = void 0;
-const typeorm_1 = __webpack_require__(6);
-const typeorm_2 = __webpack_require__(11);
+const typeorm_1 = __webpack_require__(11);
 const messages_entities_1 = __webpack_require__(83);
+const common_1 = __webpack_require__(4);
 let MessagesRepository = class MessagesRepository {
-    constructor(messagesRepository) {
-        this.messagesRepository = messagesRepository;
+    constructor(dataSource) {
+        this.dataSource = dataSource;
+        this.messagesRepository = this.dataSource.getRepository(messages_entities_1.Messages);
     }
     async getAllByChats(chatId, query) {
         const { page, limit } = query;
@@ -2291,7 +2296,18 @@ let MessagesRepository = class MessagesRepository {
         return messages;
     }
     async create(chatId, body) {
-        const newMessages = this.messagesRepository.create(body);
+        const newMessages = this.messagesRepository.create({
+            ...body,
+            sender: messages_entities_1.SenderType.USER,
+        });
+        newMessages.chatId = chatId;
+        return this.messagesRepository.save(newMessages);
+    }
+    async createSender(chatId, body) {
+        const newMessages = this.messagesRepository.create({
+            ...body,
+            sender: messages_entities_1.SenderType.SENDER,
+        });
         newMessages.chatId = chatId;
         return this.messagesRepository.save(newMessages);
     }
@@ -2307,8 +2323,8 @@ let MessagesRepository = class MessagesRepository {
 };
 exports.MessagesRepository = MessagesRepository;
 exports.MessagesRepository = MessagesRepository = __decorate([
-    __param(0, (0, typeorm_1.InjectRepository)(messages_entities_1.Messages)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object])
 ], MessagesRepository);
 
 
@@ -2326,18 +2342,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ChatsRepository = void 0;
-const typeorm_1 = __webpack_require__(6);
-const typeorm_2 = __webpack_require__(11);
-const chats_entities_1 = __webpack_require__(80);
+const typeorm_1 = __webpack_require__(11);
+const _domains_1 = __webpack_require__(8);
+const common_1 = __webpack_require__(4);
 let ChatsRepository = class ChatsRepository {
-    constructor(chatsRepository) {
-        this.chatsRepository = chatsRepository;
+    constructor(dataSource) {
+        this.dataSource = dataSource;
+        this.chatsRepository = this.dataSource.getRepository(_domains_1.Chats);
     }
     async getAllByUser(userId, query) {
         const { page, limit } = query;
@@ -2380,8 +2394,8 @@ let ChatsRepository = class ChatsRepository {
 };
 exports.ChatsRepository = ChatsRepository;
 exports.ChatsRepository = ChatsRepository = __decorate([
-    __param(0, (0, typeorm_1.InjectRepository)(chats_entities_1.Chats)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object])
 ], ChatsRepository);
 
 
@@ -2584,18 +2598,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UserRepository = void 0;
-const typeorm_1 = __webpack_require__(6);
-const typeorm_2 = __webpack_require__(11);
+const typeorm_1 = __webpack_require__(11);
 const user_entities_1 = __webpack_require__(10);
+const common_1 = __webpack_require__(4);
 let UserRepository = class UserRepository {
-    constructor(userRepository) {
-        this.userRepository = userRepository;
+    constructor(dataSource) {
+        this.dataSource = dataSource;
+        this.userRepository = this.dataSource.getRepository(user_entities_1.User);
     }
     async getAll(query) {
         const { page, limit } = query;
@@ -2625,8 +2637,8 @@ let UserRepository = class UserRepository {
 };
 exports.UserRepository = UserRepository;
 exports.UserRepository = UserRepository = __decorate([
-    __param(0, (0, typeorm_1.InjectRepository)(user_entities_1.User)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object])
 ], UserRepository);
 
 
@@ -2667,20 +2679,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b;
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthRepository = void 0;
 const typeorm_1 = __webpack_require__(11);
-const typeorm_2 = __webpack_require__(6);
 const user_1 = __webpack_require__(9);
 const user_auth_method_1 = __webpack_require__(86);
+const common_1 = __webpack_require__(4);
 let AuthRepository = class AuthRepository {
-    constructor(userRepository, authMethodRepository) {
-        this.userRepository = userRepository;
-        this.authMethodRepository = authMethodRepository;
+    constructor(dataSource) {
+        this.dataSource = dataSource;
+        this.userRepository = this.dataSource.getRepository(user_1.User);
+        this.authMethodRepository = this.dataSource.getRepository(user_auth_method_1.UserAuthMethod);
     }
     async login(email) {
         const user = await this.userRepository.findOne({
@@ -2715,14 +2725,56 @@ let AuthRepository = class AuthRepository {
 };
 exports.AuthRepository = AuthRepository;
 exports.AuthRepository = AuthRepository = __decorate([
-    __param(0, (0, typeorm_2.InjectRepository)(user_1.User)),
-    __param(1, (0, typeorm_2.InjectRepository)(user_auth_method_1.UserAuthMethod)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.Repository !== "undefined" && typeorm_1.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_1.Repository !== "undefined" && typeorm_1.Repository) === "function" ? _b : Object])
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object])
 ], AuthRepository);
 
 
 /***/ }),
 /* 92 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+__exportStar(__webpack_require__(93), exports);
+
+
+/***/ }),
+/* 93 */
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AiDTO = void 0;
+class AiDTO {
+}
+exports.AiDTO = AiDTO;
+(function (AiDTO) {
+    class Generate {
+    }
+    AiDTO.Generate = Generate;
+    class Push {
+    }
+    AiDTO.Push = Push;
+})(AiDTO || (exports.AiDTO = AiDTO = {}));
+
+
+/***/ }),
+/* 94 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -2791,6 +2843,10 @@ let MessagesService = class MessagesService {
         const model = await this.messagesRepository.create(params.chatId, body);
         return { message: _domains_1.MessagesDTO.fromModel(model) };
     }
+    async createSender(params, body) {
+        const model = await this.messagesRepository.createSender(params.chatId, body);
+        return { message: _domains_1.MessagesDTO.fromModel(model) };
+    }
     async update(params, body) {
         const model = await this.messagesRepository.update(params.id, body);
         return { message: _domains_1.MessagesDTO.fromModel(model) };
@@ -2808,7 +2864,7 @@ exports.MessagesService = MessagesService = __decorate([
 
 
 /***/ }),
-/* 93 */
+/* 95 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -2829,7 +2885,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MessagesController = void 0;
 const common_1 = __webpack_require__(4);
 const microservices_1 = __webpack_require__(2);
-const messages_service_1 = __webpack_require__(92);
+const messages_service_1 = __webpack_require__(94);
 let MessagesController = class MessagesController {
     constructor(messagesService) {
         this.messagesService = messagesService;
@@ -2840,11 +2896,14 @@ let MessagesController = class MessagesController {
     async getAllByChatsAndSender(data) {
         return this.messagesService.getAllByChatsAndSender(data.query, data.params);
     }
-    async findById(params) {
-        return this.messagesService.findById(params);
+    async findById(data) {
+        return this.messagesService.findById(data.params);
     }
     async create(data) {
         return this.messagesService.create(data.params, data.body);
+    }
+    async createSender(data) {
+        return this.messagesService.createSender(data.params, data.body);
     }
     async update(data) {
         return this.messagesService.update(data.params, data.body);
@@ -2883,6 +2942,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], MessagesController.prototype, "create", null);
 __decorate([
+    (0, microservices_1.MessagePattern)('messages.createSender'),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], MessagesController.prototype, "createSender", null);
+__decorate([
     (0, microservices_1.MessagePattern)('messages.update'),
     __param(0, (0, microservices_1.Payload)()),
     __metadata("design:type", Function),
@@ -2903,7 +2969,7 @@ exports.MessagesController = MessagesController = __decorate([
 
 
 /***/ }),
-/* 94 */
+/* 96 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -2923,50 +2989,11 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 __exportStar(__webpack_require__(32), exports);
-__exportStar(__webpack_require__(95), exports);
 __exportStar(__webpack_require__(97), exports);
+__exportStar(__webpack_require__(99), exports);
 __exportStar(__webpack_require__(41), exports);
 __exportStar(__webpack_require__(46), exports);
-__exportStar(__webpack_require__(107), exports);
-
-
-/***/ }),
-/* 95 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__webpack_require__(96), exports);
-
-
-/***/ }),
-/* 96 */
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DomainError = void 0;
-class DomainError extends Error {
-    constructor(message) {
-        super(message);
-        Object.setPrototypeOf(this, new.target.prototype);
-    }
-}
-exports.DomainError = DomainError;
+__exportStar(__webpack_require__(109), exports);
 
 
 /***/ }),
@@ -2989,37 +3016,23 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ConfigSchema = exports.ConfigData = void 0;
 __exportStar(__webpack_require__(98), exports);
-__exportStar(__webpack_require__(99), exports);
-var data_1 = __webpack_require__(106);
-Object.defineProperty(exports, "ConfigData", ({ enumerable: true, get: function () { return data_1.Data; } }));
-var schema_1 = __webpack_require__(105);
-Object.defineProperty(exports, "ConfigSchema", ({ enumerable: true, get: function () { return schema_1.Schema; } }));
 
 
 /***/ }),
 /* 98 */
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ ((__unused_webpack_module, exports) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ConfigProvider = void 0;
-const config_1 = __webpack_require__(5);
-const _shared_1 = __webpack_require__(15);
-const factories_1 = __webpack_require__(99);
-class ConfigProvider {
-    static forRoot(scopes, service) {
-        return config_1.ConfigModule.forRoot({
-            envFilePath: factories_1.EnvPathFactory.create(scopes, service),
-            isGlobal: true,
-            validate: (config) => {
-                return (0, _shared_1.validateClass)(factories_1.ConfigSchemaFactory.create(scopes, service), config);
-            },
-        });
+exports.DomainError = void 0;
+class DomainError extends Error {
+    constructor(message) {
+        super(message);
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 }
-exports.ConfigProvider = ConfigProvider;
+exports.DomainError = DomainError;
 
 
 /***/ }),
@@ -3042,8 +3055,13 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ConfigSchema = exports.ConfigData = void 0;
 __exportStar(__webpack_require__(100), exports);
-__exportStar(__webpack_require__(104), exports);
+__exportStar(__webpack_require__(101), exports);
+var data_1 = __webpack_require__(108);
+Object.defineProperty(exports, "ConfigData", ({ enumerable: true, get: function () { return data_1.Data; } }));
+var schema_1 = __webpack_require__(107);
+Object.defineProperty(exports, "ConfigSchema", ({ enumerable: true, get: function () { return schema_1.Schema; } }));
 
 
 /***/ }),
@@ -3052,10 +3070,58 @@ __exportStar(__webpack_require__(104), exports);
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ConfigProvider = void 0;
+const config_1 = __webpack_require__(5);
+const _shared_1 = __webpack_require__(15);
+const factories_1 = __webpack_require__(101);
+class ConfigProvider {
+    static forRoot(scopes, service) {
+        return config_1.ConfigModule.forRoot({
+            envFilePath: factories_1.EnvPathFactory.create(scopes, service),
+            isGlobal: true,
+            validate: (config) => {
+                return (0, _shared_1.validateClass)(factories_1.ConfigSchemaFactory.create(scopes, service), config);
+            },
+        });
+    }
+}
+exports.ConfigProvider = ConfigProvider;
+
+
+/***/ }),
+/* 101 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+__exportStar(__webpack_require__(102), exports);
+__exportStar(__webpack_require__(106), exports);
+
+
+/***/ }),
+/* 102 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.EnvPathFactory = void 0;
-const process = __webpack_require__(101);
-const path = __webpack_require__(102);
-const dotenv_1 = __webpack_require__(103);
+const process = __webpack_require__(103);
+const path = __webpack_require__(104);
+const dotenv_1 = __webpack_require__(105);
 (0, dotenv_1.config)();
 class EnvPathFactory {
     static env() {
@@ -3080,32 +3146,32 @@ EnvPathFactory.BASE_DIR = path.resolve(process.cwd(), '.');
 
 
 /***/ }),
-/* 101 */
+/* 103 */
 /***/ ((module) => {
 
 module.exports = require("node:process");
 
 /***/ }),
-/* 102 */
+/* 104 */
 /***/ ((module) => {
 
 module.exports = require("path");
 
 /***/ }),
-/* 103 */
+/* 105 */
 /***/ ((module) => {
 
 module.exports = require("dotenv");
 
 /***/ }),
-/* 104 */
+/* 106 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ConfigSchemaFactory = void 0;
 const swagger_1 = __webpack_require__(14);
-const schema_1 = __webpack_require__(105);
+const schema_1 = __webpack_require__(107);
 const LOG_TAG = 'ConfigSchemaFactory';
 class ConfigSchemaFactory {
     static create(scopes, service) {
@@ -3135,7 +3201,7 @@ exports.ConfigSchemaFactory = ConfigSchemaFactory;
 
 
 /***/ }),
-/* 105 */
+/* 107 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -3151,7 +3217,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Schema = void 0;
 const class_validator_1 = __webpack_require__(68);
-const data_1 = __webpack_require__(106);
+const data_1 = __webpack_require__(108);
 const class_transformer_1 = __webpack_require__(71);
 var Schema;
 (function (Schema) {
@@ -3204,47 +3270,16 @@ var Schema;
             __metadata("design:type", String)
         ], Database.prototype, "DATABASE_NAME", void 0);
         Scope.Database = Database;
-        class S3 {
-        }
-        S3.scope = data_1.Data.Scope.Enum.S3;
-        __decorate([
-            (0, class_validator_1.IsString)(),
-            __metadata("design:type", String)
-        ], S3.prototype, "S3_USER", void 0);
-        __decorate([
-            (0, class_validator_1.IsString)(),
-            __metadata("design:type", String)
-        ], S3.prototype, "S3_PASSWORD", void 0);
-        __decorate([
-            (0, class_validator_1.IsInt)(),
-            (0, class_transformer_1.Type)(() => Number),
-            __metadata("design:type", String)
-        ], S3.prototype, "S3_PORT", void 0);
-        __decorate([
-            (0, class_validator_1.IsString)(),
-            __metadata("design:type", String)
-        ], S3.prototype, "S3_HOST", void 0);
-        __decorate([
-            (0, class_validator_1.IsString)(),
-            __metadata("design:type", String)
-        ], S3.prototype, "S3_BUCKET", void 0);
-        __decorate([
-            (0, class_validator_1.IsString)(),
-            __metadata("design:type", String)
-        ], S3.prototype, "S3_REGION", void 0);
-        Scope.S3 = S3;
         class JWT {
         }
         JWT.scope = data_1.Data.Scope.Enum.JWT;
         __decorate([
-            (0, class_transformer_1.Type)(() => Number),
-            (0, class_validator_1.IsInt)(),
-            __metadata("design:type", Number)
+            (0, class_validator_1.IsString)(),
+            __metadata("design:type", String)
         ], JWT.prototype, "JWT_REFRESH_TOKEN_SECRET", void 0);
         __decorate([
-            (0, class_transformer_1.Type)(() => Number),
-            (0, class_validator_1.IsInt)(),
-            __metadata("design:type", Number)
+            (0, class_validator_1.IsString)(),
+            __metadata("design:type", String)
         ], JWT.prototype, "JWT_ACCESS_TOKEN_SECRET", void 0);
         __decorate([
             (0, class_transformer_1.Type)(() => Number),
@@ -3264,13 +3299,13 @@ var Schema;
             __metadata("design:type", String)
         ], NATS.prototype, "NATS_PATH_PROD", void 0);
         Scope.NATS = NATS;
-        Scope.Self = [Database, S3, JWT, NATS];
+        Scope.Self = [Database, JWT, NATS];
     })(Scope = Schema.Scope || (Schema.Scope = {}));
 })(Schema || (exports.Schema = Schema = {}));
 
 
 /***/ }),
-/* 106 */
+/* 108 */
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -3283,7 +3318,6 @@ var Data;
         let Enum;
         (function (Enum) {
             Enum["Database"] = "database";
-            Enum["S3"] = "s3";
             Enum["JWT"] = "jwt";
             Enum["NATS"] = "nats";
         })(Enum = Scope.Enum || (Scope.Enum = {}));
@@ -3299,7 +3333,7 @@ var Data;
 
 
 /***/ }),
-/* 107 */
+/* 109 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -3318,11 +3352,12 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__webpack_require__(108), exports);
+__exportStar(__webpack_require__(110), exports);
+__exportStar(__webpack_require__(112), exports);
 
 
 /***/ }),
-/* 108 */
+/* 110 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -3340,7 +3375,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PasswordService = void 0;
 const common_1 = __webpack_require__(4);
 const config_1 = __webpack_require__(5);
-const bcrypt = __webpack_require__(109);
+const bcrypt = __webpack_require__(111);
 let PasswordService = class PasswordService {
     constructor(config) {
         this.config = config;
@@ -3362,10 +3397,37 @@ exports.PasswordService = PasswordService = __decorate([
 
 
 /***/ }),
-/* 109 */
+/* 111 */
 /***/ ((module) => {
 
 module.exports = require("bcrypt");
+
+/***/ }),
+/* 112 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PasswordModule = void 0;
+const common_1 = __webpack_require__(4);
+const password_service_1 = __webpack_require__(110);
+let PasswordModule = class PasswordModule {
+};
+exports.PasswordModule = PasswordModule;
+exports.PasswordModule = PasswordModule = __decorate([
+    (0, common_1.Global)(),
+    (0, common_1.Module)({
+        providers: [password_service_1.PasswordService],
+        exports: [password_service_1.PasswordService],
+    })
+], PasswordModule);
+
 
 /***/ })
 /******/ 	]);
@@ -3408,7 +3470,7 @@ async function bootstrap() {
     const app = await core_1.NestFactory.createMicroservice(app_module_1.AppModule, {
         transport: microservices_1.Transport.NATS,
         options: {
-            servers: ['nats://localhost:4222'],
+            servers: ['nats://nats:4222'],
             queue: 'messages_queue',
         },
     });
