@@ -2,6 +2,8 @@
 
 import os
 import uuid
+import logging
+import subprocess
 from pathlib import Path
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
@@ -16,6 +18,7 @@ if TYPE_CHECKING:
 
 # In-memory run store for M1
 _RUN_STORE: Dict[str, Dict[str, Any]] = {}
+logger = logging.getLogger(__name__)
 
 
 class Orchestrator:
@@ -82,10 +85,12 @@ class Orchestrator:
             # Build prompt using template
             prompt_builder = PromptBuilder()
             prompt = prompt_builder.build(plan=plan, endpoints=endpoints, spec=spec)
+            logger.info("PROMPT: %s", prompt[:1000])
             
             # Call LLM
             code_raw = self.llm.generate(prompt)
             code = self._extract_code_block(code_raw).strip() or code_raw.strip()
+            logger.info("LLM result length: %d", len(code))
             
             # Create run directory
             run_dir = self.artifacts_dir / run_id
@@ -94,6 +99,17 @@ class Orchestrator:
             # Save generated code
             artifact_file = run_dir / f"generated_{run_id}.py"
             artifact_file.write_text(code, encoding="utf-8")
+
+            # Optional format with black if available
+            try:
+                subprocess.run(
+                    ["black", str(artifact_file)],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except Exception:
+                pass
 
             # Validate generated code
             is_valid, validation_error = validate_generated_code(str(artifact_file))

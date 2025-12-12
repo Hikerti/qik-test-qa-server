@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     LLM_TOP_P: float = 0.95
     USE_REAL_LLM: bool = False
     MAX_TESTS_PER_ENDPOINT: int = 3
+    NATS_URL: str = "nats://127.0.0.1:4222"
+    GITHUB_PAT: Optional[str] = None
+    GITHUB_API_URL: str = "https://api.github.com"
+    GIT_CLONE_DEPTH: int = 1
+    GIT_ALLOWED_HOSTS: tuple[str, ...] = ("github.com",)
     
     class Config:
         env_file = ".env"

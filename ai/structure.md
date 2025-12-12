@@ -1,9 +1,5 @@
 # Структура проекта AI
 
-# cd qik-test-qa-server
-# cd ai
-# .venv/Scripts/Activate.ps1
-
 Данный документ описывает полную структуру подпроекта AI для автоматической генерации тестов.
 
 ## Общая структура
@@ -71,7 +67,8 @@ ai/
 │           └─ ai_worker/                      # Основной пакет worker приложения
 │               ├─ __init__.py                 # Инициализация пакета ai_worker
 │               ├─ worker_main.py              # Главный файл worker. Обработка очереди задач, запуск orchestrator tasks в фоне, управление воркерами.
-│               └─ queue_client.py             # Абстракция для работы с очередями сообщений (RabbitMQ/Kafka). Использует libs.integrations для унификации интерфейса.
+│               ├─ queue_client.py             # Абстракция для работы с очередями сообщений (RabbitMQ/Kafka). Использует libs.integrations для унификации интерфейса.
+│               └─ nats_worker.py              # Точка входа для NATS worker (подписки generate/commit_push).
 │
 ├─ libs/                                       # Переиспользуемые библиотеки — нижние слои архитектуры
 │   │                                          # Важно: библиотеки не должны импортировать код из apps/ (обратная зависимость запрещена)
@@ -136,6 +133,10 @@ ai/
 │   │   │   ├─ executor.py                     # Высокоуровневый интерфейс запуска тестов. Координация выполнения, сбор результатов, обработка ошибок.
 │   │   │   └─ runner_protocol.py              # Протокол (Protocol/abstract class) для runner. Определяет интерфейс, который реализует apps/runner для конкретного фреймворка.
 │   │   │
+│   │   ├─ cicd/                               # CICD-утилиты: git + high-level хендлер
+│   │   │   ├─ git_client.py                   # Обёртка над git CLI и GitHub API (clone/branch/commit/push/create_pr).
+│   │   │   └─ handler.py                      # Логика generate → (dry-run|push) → PR + публикация событий.
+│   │   │
 │   │   └─ packager/                           # Упаковщик — готовит артефакты для доставки (архивы, MR)
 │   │       ├─ __init__.py                     # Инициализация пакета packager
 │   │       ├─ packager.py                     # Основной упаковщик. Собирает архив с тестами, формирует MR payload для GitLab, управляет версионированием.
@@ -155,6 +156,7 @@ ai/
 │   │   └─ mocks/                              # Моки для интерфейсов — используются в юнит-тестах
 │   │       ├─ __init__.py                     # Инициализация пакета mocks
 │   │       └─ local_git_stub.py               # Заглушка для локального Git сервиса. Используется в тестах вместо реального GitLab API.
+│   │   └─ nats_controller.py                  # Async NATS controller (подписки ai.generate_tests / ai.cicd.commit_push).
 │   │
 │   ├─ systems/                                # Библиотека систем — конкретные реализации интерфейсов из libs.integrations
 │   │   │                                      # Содержит реальные клиенты для GitLab, LLM провайдеров, векторных БД, хранилищ
@@ -169,6 +171,7 @@ ai/
 │   │   ├─ llm/                                # LLM провайдеры
 │   │   │   ├─ __init__.py                     # Инициализация пакета llm
 │   │   │   ├─ cloud_llm_client.py             # Реализация LLMService для облачных провайдеров (OpenAI, Anthropic). Retries, backoff, обработка rate limits.
+│   │   │   ├─ qwen_client.py                  # Qwen LLM клиент (HTTP), поддержка sync/async, ретраи, настройки из env.
 │   │   │   └─ local_llm_stub.py               # Заглушка для локального LLM (dev/stub). Используется для разработки без реальных API вызовов.
 │   │   │
 │   │   ├─ qdrant/                             # Qdrant векторная БД

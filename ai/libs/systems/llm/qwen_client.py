@@ -47,15 +47,12 @@ class QwenLLMClient(LLMService):
             raise LLMError("LLM API key is not configured (LLM_API_KEY).")
 
     def generate(self, prompt: str, max_tokens: int = 512) -> str:
-        """Sync wrapper over async generate."""
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
+        """Sync wrapper over async generate.
 
-        if loop and loop.is_running():
-            # If loop is running, run async in a new task and wait
-            return loop.run_until_complete(self.agenerate(prompt, max_tokens=max_tokens))
+        NOTE: This wrapper always runs the async coroutine in a *new* event loop
+        using asyncio.run(). We rely on callers that may be in an async context
+        to call this function from a separate thread (we enforce that in handler).
+        """
         return asyncio.run(self.agenerate(prompt, max_tokens=max_tokens))
 
     async def agenerate(self, prompt: str, max_tokens: int = 512) -> str:
@@ -79,9 +76,9 @@ class QwenLLMClient(LLMService):
                     resp = await client.post(self.base_url, json=payload, headers=headers)
                     resp.raise_for_status()
                     data = resp.json()
-                    # OpenAI-like schema: choices[0].message.content
+                    # Attempt to extract text from typical response shapes
                     choices = data.get("choices") or []
-                    if choices and "message" in choices[0]:
+                    if choices and isinstance(choices[0], dict) and "message" in choices[0]:
                         text = choices[0]["message"].get("content")
                     else:
                         text = data.get("text") or data.get("result") or data.get("data")
@@ -95,4 +92,3 @@ class QwenLLMClient(LLMService):
                 await asyncio.sleep(self.backoff_base * (2 ** (attempt - 1)) + random.random() * 0.1)
 
         raise LLMError(f"LLM request failed after retries: {last_error}")
-
