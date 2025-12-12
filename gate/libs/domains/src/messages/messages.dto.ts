@@ -1,8 +1,8 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 
-import { Messages, SenderType } from '@domains';
 import { ApiSchemaName, IdField } from '@shared';
 import { IsDate, IsEnum, IsString } from 'class-validator';
+import { SenderType, Messages } from './messages.entities';
 
 @ApiSchemaName('MessagesDTO')
 export class MessagesDTO {
@@ -14,9 +14,7 @@ export class MessagesDTO {
   content: string;
 
   @ApiProperty({ enum: SenderType })
-  @IsEnum(SenderType, {
-    message: `sender must be one of: ${Object.values(SenderType).join(', ')}`,
-  })
+  @IsEnum(SenderType)
   sender: SenderType;
 
   @ApiProperty()
@@ -35,7 +33,11 @@ export class MessagesDTO {
 
 export namespace MessagesDTO {
   @ApiSchemaName('MessagesCreateDTO')
-  export class Create extends OmitType(MessagesDTO, ['id', 'createdAt']) {}
+  export class Create extends OmitType(MessagesDTO, [
+    'id',
+    'sender',
+    'createdAt',
+  ]) {}
   @ApiSchemaName('MessagesUpdateDTO')
   export class Update extends PartialType(MessagesDTO.Create) {}
 }

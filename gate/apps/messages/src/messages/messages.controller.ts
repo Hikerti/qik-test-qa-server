@@ -45,6 +45,17 @@ export class MessagesController {
     return this.messagesService.create(data.params, data.body);
   }
 
+  @MessagePattern('messages.createSender')
+  async createSender(
+    @Payload()
+    data: {
+      params: { chatId: string };
+      body: MessagesDTO.Create;
+    },
+  ) {
+    return this.messagesService.createSender(data.params, data.body);
+  }
+
   @MessagePattern('messages.update')
   async update(
     @Payload()

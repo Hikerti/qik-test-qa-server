@@ -77,6 +77,17 @@ export class MessagesService {
     return { message: MessagesDTO.fromModel(model) };
   }
 
+  async createSender(
+    params: { chatId: string },
+    body: MessagesDTO.Create,
+  ): Promise<{ message: MessagesDTO }> {
+    const model = await this.messagesRepository.createSender(
+      params.chatId,
+      body,
+    );
+    return { message: MessagesDTO.fromModel(model) };
+  }
+
   async update(
     params: { id: string },
     body: MessagesDTO.Update,

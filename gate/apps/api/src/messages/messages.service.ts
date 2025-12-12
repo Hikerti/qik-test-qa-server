@@ -50,6 +50,15 @@ export class MessagesService {
       .toPromise();
   }
 
+  async createSender(
+    params: CreateMessageContract.RequestParams,
+    body: CreateMessageContract.RequestBody,
+  ): Promise<CreateMessageContract.ResponsePayload> {
+    return this.messagesClient
+      .send('messages.createSender', { params, body })
+      .toPromise();
+  }
+
   async update(
     params: UpdateMessageContract.RequestParams,
     body: UpdateMessageContract.RequestBody,

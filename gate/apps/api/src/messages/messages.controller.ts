@@ -12,6 +12,7 @@ import {
   MessagesContract,
   UpdateMessageContract,
 } from './contracts';
+import { CreateMessageSenderContract } from './contracts/create-messages-sender.contract';
 
 @ApplyHttpControllerContract(MessagesContract)
 export class MessagesController {
@@ -46,6 +47,14 @@ export class MessagesController {
     @Body() body: CreateMessageContract.RequestBody,
   ): Promise<CreateMessageContract.ResponsePayload> {
     return this.messagesService.create(params, body);
+  }
+
+  @ApplyHttpMethodContract(CreateMessageSenderContract)
+  async createSender(
+    @Param() params: CreateMessageSenderContract.RequestParams,
+    @Body() body: CreateMessageSenderContract.RequestBody,
+  ): Promise<CreateMessageSenderContract.ResponsePayload> {
+    return this.messagesService.createSender(params, body);
   }
 
   @ApplyHttpMethodContract(UpdateMessageContract)

@@ -62,7 +62,22 @@ export class MessagesRepository {
   }
 
   async create(chatId: string, body: MessagesDTO.Create): Promise<Messages> {
-    const newMessages = this.messagesRepository.create(body);
+    const newMessages = this.messagesRepository.create({
+      ...body,
+      sender: SenderType.USER,
+    });
+    newMessages.chatId = chatId;
+    return this.messagesRepository.save(newMessages);
+  }
+
+  async createSender(
+    chatId: string,
+    body: MessagesDTO.Create,
+  ): Promise<Messages> {
+    const newMessages = this.messagesRepository.create({
+      ...body,
+      sender: SenderType.SENDER,
+    });
     newMessages.chatId = chatId;
     return this.messagesRepository.save(newMessages);
   }
