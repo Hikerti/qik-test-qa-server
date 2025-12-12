@@ -1,143 +1,158 @@
-# AI Subproject
+# AI Subproject — пошагово для запуска, проверки и демо
 
-Описание подпроекта AI для автоматической генерации тестов.
+Цель: показать генерацию/валидацию
+- 15+ ручных кейсов UI калькулятора (mode=manual_ui, .md)
+- 15+ ручных кейсов API VMs/Disks/Flavors (mode=manual_api, .md)
+- Авто E2E (Playwright+pytest, mode=e2e, .py)
+- Авто API (pytest httpx/requests, mode=api_tests, .py)
+- Валидация (.md/.py), интеграция с Qwen (Cloud.ru FM), NATS CICD dry-run/push
 
-## Установка
-
-```bash
-# Установка зависимостей
-pip install -r requirements.txt
-
-# Разработка: установка библиотек в editable mode
-./scripts/setup_dev_env.sh
-```
-
-## Запуск
-
-```bash
-# Локальный демо-запуск pipeline
-./scripts/run_local_demo.sh
-```
-
-## LLM конфигурация (.env)
-
-В `.env` (не коммитить) можно указать:
-```
-LLM_API_KEY=your_qwen_key
-LLM_BASE_URL=https://foundation-models.api.cloud.ru/v1/chat/completions
-LLM_MODEL=Qwen/Qwen3-Coder-480B-A35B-Instruct
-LLM_TEMPERATURE=0.5
-LLM_TOP_P=0.95
-USE_REAL_LLM=true  # иначе используется LocalLLMStub
-```
-
-Без ключа автоматически используется локальный stub.
-
-## Быстрый демо-запуск
-
-1) Запустить API:
-```
-cd ai
-$env:PYTHONPATH=".;apps/api/src"
-uvicorn ai_api.main:app --app-dir apps/api/src --reload --port 8000
-```
-2) В другом окне:
-```
-cd ai
-.\run_and_execute.ps1 -example 1   # ping
-.\run_and_execute.ps1 -example 2   # GET /echo?msg
-.\run_and_execute.ps1 -example 3   # POST /items
-```
-Скрипт сам отправит POST /v1/generate, подождёт статус и запустит pytest по артефакту.
-
-## Полный запуск с нуля (локально, без Docker)
-
-1) Завести окружение:
+## 1. Подготовка окружения (локально)
 ```
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
-
-2) Поднять NATS (отдельно от compose):
-```
-docker run --rm -p 4222:4222 -p 8222:8222 nats:latest -DV
-```
-Адреса: `nats://localhost:4222` (локально), в compose — `nats://nats:4222`.
-
-3) Настроить переменные окружения (реальный Qwen):
+Env (пример):
 ```
 $env:NATS_URL="nats://localhost:4222"
 $env:USE_REAL_LLM="true"
 $env:LLM_API_KEY="<qwen_api_key>"
 $env:LLM_BASE_URL="https://foundation-models.api.cloud.ru/v1/chat/completions"
 $env:LLM_MODEL="Qwen/Qwen3-Coder-480B-A35B-Instruct"
-$env:LLM_TEMPERATURE="0.5"
-$env:LLM_TOP_P="0.95"
-# для пушей/PR
-$env:GITHUB_PAT="<github_pat_with_repo_rights>"
+$env:GITHUB_PAT="<token_with_repo_rights>"   # нужно только для push/PR
 ```
 
-4) PYTHONPATH для воркера (важно для импортов):
+## 2. Поднять NATS
+Compose: docker compose -f deploy/compose.proxy.yml up -d nats  
+Или Docker напрямую: docker run --rm -p 4222:4222 -p 8222:8222 nats:latest -DV  
+
+Адреса: локально `nats://localhost:4222`, в compose — `nats://nats:4222`.
+
+## 3. Запуск воркера (NATS listener)
+Из корня репо:
 ```
-cd <repo_root>\qik-test-qa-server
 $env:PYTHONPATH="ai;ai\apps\worker\src"
-python -m ai_worker.nats_worker
+python -m apps.worker.src.ai_worker.nats_worker
 ```
-Если хотите использовать модульный путь из корня: `$env:PYTHONPATH="ai"; python -m apps.worker.src.ai_worker.nats_worker` (добавьте `ai\apps\worker\src` при необходимости, если не находится пакет `ai_worker`).
+Логи: Connected to NATS; подписки на `ai.generate_tests`, `ai.cicd.commit_push`.
 
-5) Отправить generate через NATS (пример):
-```python
-import asyncio, json
-from nats.aio.client import Client as NATS
-
-async def main():
-    nc = NATS()
-    await nc.connect("nats://127.0.0.1:4222")
-    req = {
-      "request_id":"req-demo-1",
-      "spec":{"openapi":"3.0.0","info":{"title":"demo","version":"1.0.0"},"paths":{}},
-      "callback_subject":"ai.responses.demo"
-    }
-    await nc.publish("ai.generate_tests", json.dumps(req).encode())
-    async def cb(msg): print(msg.data.decode())
-    await nc.subscribe("ai.responses.demo", cb=cb)
-    await asyncio.sleep(10)
-    await nc.drain()
-asyncio.run(main())
+## 4. (Опционально) HTTP API /v1/generate
 ```
-В ответе придёт `run_id` и `artifact_path`.
+cd ai
+$env:PYTHONPATH=".;apps/api/src"
+uvicorn ai_api.main:app --app-dir apps/api/src --reload --port 8000
+```
 
-6) Отправить commit/push (dry-run или реальный push/PR):
-```python
-req = {
-  "request_id":"cicd-"+__import__("uuid").uuid4().hex[:8],
-  "run_id":"<PUT_RUN_ID_FROM_GENERATE>",
-  "repo":"https://github.com/your/test-repo.git",
-  "branch":"ai/generated/test-run",
-  "target_branch":"main",
-  "commit_message":"Add AI generated tests (dry-run)",
-  "create_pr": True,
-  "dry_run": True,          # false для реального пуша
-  "callback_subject":"ai.responses.demo"
+## 5. Генерация через NATS — основные payload
+Топик: `ai.generate_tests`. Ответы — `callback_subject` или `ai.events.<request_id>`.
+
+- Ручные UI (15+ кейсов):
+```json
+{
+  "request_id": "req-ui-1",
+  "spec": {},
+  "mode": "manual_ui",
+  "context": { "ui_notes": "см. case_detail.md, блоки калькулятора" },
+  "callback_subject": "ai.responses.ui"
 }
-# publish to ai.cicd.commit_push и слушать ai.responses.demo
 ```
-События: `committing` → `preview` (diff) для dry-run, либо `pushed` → `pr_created` → `finished` при реальном пуше.
+- Ручные API (15+ кейсов VMs/Disks/Flavors):
+```json
+{
+  "request_id": "req-api-1",
+  "spec": {},
+  "mode": "manual_api",
+  "context": { "api_notes": "VMs/Disks/Flavors, bearer auth, UUIDv4" },
+  "callback_subject": "ai.responses.api"
+}
+```
+- Авто E2E (Playwright+pytest):
+```json
+{
+  "request_id": "req-e2e-1",
+  "spec": { "openapi": "3.0.0", "info": { "title": "demo", "version": "1.0.0" }, "paths": {} },
+  "mode": "e2e",
+  "context": { "ui_notes": "главная, каталог, конфигурация compute, mobile" },
+  "callback_subject": "ai.responses.e2e"
+}
+```
+- Авто API (pytest httpx/requests):
+```json
+{
+  "request_id": "req-apit-1",
+  "spec": { "openapi": "3.0.0", "info": { "title": "compute", "version": "1.0.0" }, "paths": {} },
+  "mode": "api_tests",
+  "context": { "api_notes": "VMs/Disks/Flavors, позитив/негатив, bearer" },
+  "callback_subject": "ai.responses.apit"
+}
 
+run_id генерируется воркером и приходит в callback. Его нужно использовать для CICD push.
 
+```
+Результат: `run_id`, `artifact_path`, `preview`. `.md` для manual_*, `.py` для e2e/api_tests.
 
-## NATS
-Рабочий URL для кластера: `nats://nats:4222`  
-Локально: `nats://localhost:4222`
+## 6. CICD через NATS (dry-run / push / PR)
+Топик: `ai.cicd.commit_push`.
+Пример (dry-run diff):
+```json
+{
+  "request_id": "cicd-xxxx",
+  "run_id": "<run_id_from_generate>",
+  "repo": "https://github.com/owner/repo.git",
+  "branch": "ai/generated/<run_id>",
+  "target_branch": "main",
+  "commit_message": "Add AI generated tests",
+  "create_pr": true,
+  "dry_run": true,
+  "callback_subject": "ai.responses.cicd"
+}
+```
+События: `committing` → `preview(diff)` → `finished`.  
+Для пуша: `dry_run:false`, нужен `GITHUB_PAT`. Если ветка существует — берите новую или убедитесь, что origin свежий (fetch уже выполняется). 
 
+## 7. Проверка требований (что смотреть)
+- UI manual: .md, ≥15 кейсов, ID/Title/Preconditions/Steps/Expected, RU.
+- API manual: .md, ≥15 кейсов, VMs/Disks/Flavors, позитив/негатив.
+- E2E: .py, ≥5 сценариев, Playwright+pytest, Allure, AAA.
+- API autotests: .py, 8–10 тестов, httpx/requests, Allure, AAA, позитив/негатив (401/404/400).
+- Валидация: semantic_checks — .md не пуст и содержит заголовки; .py компилируется и содержит test_.
+- Qwen: при LLM_API_KEY/USE_REAL_LLM=true используется реальный клиент; иначе LocalLLMStub.
+- Docker: NATS в `deploy/compose.proxy.yml`; остальные сервисы без изменений. Воркера сейчас вручную (можно добавить сервис по аналогии).
+- Документация/примеры: README, `structure.md`, `case_detail.md`, `ai/nats_publish_*.py`.
+- Демо: NATS + воркер, четыре generate (manual_ui/manual_api/e2e/api_tests), затем cicd dry-run; при токене — push/PR.
 
+## 8. Мини-сценарий для лайв-демо (PowerShell)
+```
+# NATS
+docker run --rm -p 4222:4222 -p 8222:8222 nats:latest -DV
 
-## Структура
+# Env
+$env:NATS_URL="nats://localhost:4222"
+$env:USE_REAL_LLM="true"
+$env:LLM_API_KEY="<qwen_key>"
+$env:GITHUB_PAT="<token>"   # если нужен push
 
-См. `structure.md` для детальной структуры проекта.
+# Воркера
+cd D:\hackaton\cloude_ru_track_2\qik-test-qa-server
+.venv\Scripts\Activate.ps1
+$env:PYTHONPATH="ai;ai\apps\worker\src"
+python -m apps.worker.src.ai_worker.nats_worker
 
+# Generate (пример manual_ui)
+python ai\nats_publish_generate.py   # или свой скрипт с mode/manual_ui
 
+# CICD dry-run
+python ai\nats_publish_cicd_preview.py
+```
 
----
-.venv/Scripts/Activate.ps1
+## 9. Ключевые файлы
+- Шаблоны: `packages/prompt_templates/` (manual_ui/manual_api/e2e/api_tests).
+- Оркестратор: `libs/agents/orchestrator/orchestrator.py` (mode → шаблон, .md/.py).
+- NATS: `libs/integrations/nats_controller.py`.
+- CICD: `libs/agents/cicd/handler.py`, `git_client.py`.
+- Валидаторы: `libs/agents/validator/semantic_checks.py`, `lint.py`.
+- Примеры NATS: `ai/nats_publish_generate.py`, `ai/nats_publish_cicd_preview.py`, `ai/nats_subscribe.py`, `ai/nats_test.py`.
+
+## 10. Ветки для push
+Используйте уникальные ветки (`ai/generated/<run_id>`) чтобы избегать `fetch first`. Force-пуш не включён; перед пушем делается fetch origin/<branch> если ветка есть.

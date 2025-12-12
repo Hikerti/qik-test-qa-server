@@ -96,7 +96,18 @@ class GitClient:
         return repo_path
 
     def create_branch(self, repo_path: Path, branch: str, base: str = "origin/main") -> None:
-        self._run_git(["-C", str(repo_path), "checkout", "-B", branch, base])
+        """
+        Create or reset branch.
+        If remote branch exists, base on origin/<branch> to avoid non-fast-forward issues.
+        """
+        # fetch remote branch if exists
+        try:
+            self._run_git(["-C", str(repo_path), "fetch", "origin", branch])
+            remote_ref = f"origin/{branch}"
+            self._run_git(["-C", str(repo_path), "checkout", "-B", branch, remote_ref])
+        except GitClientError:
+            # fallback to base
+            self._run_git(["-C", str(repo_path), "checkout", "-B", branch, base])
 
     def apply_files(self, repo_path: Path, files: Iterable[Mapping[str, str]]) -> None:
         """Write provided files (path, content) into the repo."""

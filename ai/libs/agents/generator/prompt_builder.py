@@ -30,9 +30,11 @@ class PromptBuilder:
         spec: Optional[Dict[str, Any]] = None,
         max_tests_per_endpoint: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
+        template_name: Optional[str] = None,
     ) -> str:
         """Render prompt from plan and endpoints."""
-        template: Template = self.env.get_template(self.template_name)
+        template_to_use = template_name or self.template_name
+        template: Template = self.env.get_template(template_to_use)
         summary = f"{len(endpoints)} endpoints"
         max_tests = max_tests_per_endpoint or settings.MAX_TESTS_PER_ENDPOINT
         return template.render(

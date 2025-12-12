@@ -43,7 +43,13 @@ class Orchestrator:
         self.artifacts_dir = artifacts_dir
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
     
-    def start_run(self, spec: Dict[str, Any], run_id: Optional[str] = None) -> str:
+    def start_run(
+        self,
+        spec: Dict[str, Any],
+        run_id: Optional[str] = None,
+        mode: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """
         Start a new generation run.
         
@@ -75,16 +81,25 @@ class Orchestrator:
         }
         
         try:
-            # Parse OpenAPI spec
-            endpoints = parse_openapi(spec)
+            # Parse OpenAPI spec (if provided). For manual cases we can pass empty endpoints.
+            endpoints = parse_openapi(spec) if spec else []
 
             # Plan generation steps
             planner = PlannerStub()
             plan = planner.plan(endpoints)
 
+            # Choose template based on mode
+            template_name = self._resolve_template(mode)
+
             # Build prompt using template
-            prompt_builder = PromptBuilder()
-            prompt = prompt_builder.build(plan=plan, endpoints=endpoints, spec=spec)
+            prompt_builder = PromptBuilder(template_name=template_name)
+            prompt = prompt_builder.build(
+                plan=plan,
+                endpoints=endpoints,
+                spec=spec,
+                context=context or {},
+                template_name=template_name,
+            )
             logger.info("PROMPT: %s", prompt[:1000])
             
             # Call LLM
@@ -95,9 +110,10 @@ class Orchestrator:
             # Create run directory
             run_dir = self.artifacts_dir / run_id
             run_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Save generated code
-            artifact_file = run_dir / f"generated_{run_id}.py"
+
+            # Determine file extension by mode
+            suffix = ".md" if mode in {"manual_ui", "manual_api"} else ".py"
+            artifact_file = run_dir / f"generated_{run_id}{suffix}"
             artifact_file.write_text(code, encoding="utf-8")
 
             # Optional format with black if available
@@ -182,3 +198,13 @@ class Orchestrator:
                 return cleaned
 
         return text
+
+    @staticmethod
+    def _resolve_template(mode: Optional[str]) -> str:
+        mapping = {
+            "manual_ui": "manual_ui_cases.j2",
+            "manual_api": "manual_api_cases.j2",
+            "e2e": "e2e_playwright.j2",
+            "api_tests": "api_pytest.j2",
+        }
+        return mapping.get(mode, "generate_test_prompt.j2")

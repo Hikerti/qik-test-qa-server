@@ -30,10 +30,15 @@ class CICDHandler:
         request_id = payload.get("request_id") or payload.get("run_id")
         if not request_id:
             raise ValueError("request_id is required")
-        spec = payload.get("spec")
-        if not spec:
+        mode = payload.get("mode")
+        spec = payload.get("spec") or {}
+        # manual modes могут работать без spec; остальные требуют spec
+        manual_modes = {"manual_ui", "manual_api"}
+        if not spec and mode not in manual_modes:
             await self.publish_event(request_id, "failed", error="spec is required for now")
             return
+        mode = payload.get("mode")
+        extra_context = payload.get("context") or payload.get("case_context") or {}
 
         await self.publish_event(request_id, "started")
         run_id = request_id
@@ -42,7 +47,7 @@ class CICDHandler:
             # "This event loop is already running" when orchestration uses asyncio inside
             import asyncio
 
-            run_id = await asyncio.to_thread(self.orchestrator.start_run, spec, request_id)
+            run_id = await asyncio.to_thread(self.orchestrator.start_run, spec, request_id, mode, extra_context)
             await self.publish_event(request_id, "generating", run_id=run_id)
             run = self.orchestrator.get_run(run_id)
             if not run or run.get("status") != "finished":

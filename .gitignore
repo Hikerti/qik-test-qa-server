@@ -3,6 +3,8 @@ gate/dist
 gate/node_modules
 gate/build
 
+.deploy
+
 # Logs
 gate/gate/logs
 gate/*.log
