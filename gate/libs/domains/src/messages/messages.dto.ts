@@ -13,8 +13,10 @@ export class MessagesDTO {
   @IsString()
   content: string;
 
-  @ApiProperty()
-  @IsEnum(() => SenderType)
+  @ApiProperty({ enum: SenderType })
+  @IsEnum(SenderType, {
+    message: `sender must be one of: ${Object.values(SenderType).join(', ')}`,
+  })
   sender: SenderType;
 
   @ApiProperty()
