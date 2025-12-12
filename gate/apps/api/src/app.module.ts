@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Chats, Messages, User, UserAuthMethod } from '@domains';
+import { AiModule } from './ai/ai.module';
 
 const ConfigModuleForRoot = ConfigProvider.forRoot(
   ['database', 'jwt', 'nats'],
@@ -36,6 +37,7 @@ const ConfigModuleForRoot = ConfigProvider.forRoot(
     LoggerModule,
     JwtModule,
 
+    AiModule,
     AuthModule,
     ChatsModule,
     MessagesModule,

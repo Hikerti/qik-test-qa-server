@@ -30,19 +30,19 @@ services:
       - nats
       - postgres
 
-  # client:
-  #   build:
-  #     context: ../../client
-  #     dockerfile: Dockerfile
-  #   environment:
-  #     - NODE_ENV=production
-  #   ports:
-  #     - 4002:3000
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - nats
-  #     - postgres
-  #     - api
+  client:
+     build:
+       context: ../../client
+       dockerfile: Dockerfile
+     environment:
+       - NODE_ENV=production
+     ports:
+       - 4002:3000
+     restart: unless-stopped
+     depends_on:
+       - nats
+       - postgres
+       - api
 
   user:
     <<: *service
@@ -82,7 +82,6 @@ services:
 
   generate:
     <<: *service
-    # Контекст — корень репозитория (один уровень выше deploy)
     build:
       context: ../
       dockerfile: ai/Dockerfile

@@ -4,7 +4,7 @@ from nats.aio.client import Client as NATS
 
 async def main():
     nc = NATS()
-    await nc.connect("nats://localhost:4222")
+    await nc.connect("nats://nats:4222")
     req = {
       "request_id":"test-gen-1",
       "spec":{"openapi":"3.0.0","info":{"title":"demo","version":"1.0.0"},"paths":{"/ping":{"get":{}}}},

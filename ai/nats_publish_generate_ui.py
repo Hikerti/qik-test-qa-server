@@ -4,7 +4,7 @@ from nats.aio.client import Client as NATS
 
 async def main():
     nc = NATS()
-    await nc.connect("nats://localhost:4222")
+    await nc.connect("nats://nats:4222")
 
     callback = "ai.responses.ui"
     done = asyncio.Event()

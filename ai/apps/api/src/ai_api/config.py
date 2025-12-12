@@ -8,7 +8,7 @@ class APISettings(BaseSettings):
     """API application settings."""
     
     # NATS configuration
-    nats_servers: List[str] = ["nats://localhost:4222"]
+    nats_servers: List[str] = ["nats://nats:4222"]
     nats_topic: str = "ai.generate.text"
     
     # API configuration

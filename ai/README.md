@@ -15,7 +15,7 @@ pip install -r requirements.txt
 ```
 Env (пример):
 ```
-$env:NATS_URL="nats://localhost:4222"
+$env:NATS_URL="nats://nats:4222"
 $env:USE_REAL_LLM="true"
 $env:LLM_API_KEY="<qwen_api_key>"
 $env:LLM_BASE_URL="https://foundation-models.api.cloud.ru/v1/chat/completions"
@@ -27,7 +27,7 @@ $env:GITHUB_PAT="<token_with_repo_rights>"   # нужно только для pu
 Compose: docker compose -f deploy/compose.proxy.yml up -d nats  
 Или Docker напрямую: docker run --rm -p 4222:4222 -p 8222:8222 nats:latest -DV  
 
-Адреса: локально `nats://localhost:4222`, в compose — `nats://nats:4222`.
+Адреса: локально `nats://nats:4222`, в compose — `nats://nats:4222`.
 
 ## 3. Запуск воркера (NATS listener)
 Из корня репо:
@@ -128,7 +128,7 @@ run_id генерируется воркером и приходит в callback
 docker run --rm -p 4222:4222 -p 8222:8222 nats:latest -DV
 
 # Env
-$env:NATS_URL="nats://localhost:4222"
+$env:NATS_URL="nats://nats:4222"
 $env:USE_REAL_LLM="true"
 $env:LLM_API_KEY="<qwen_key>"
 $env:GITHUB_PAT="<token>"   # если нужен push
